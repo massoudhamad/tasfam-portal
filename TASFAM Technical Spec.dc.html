@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { font-family: Karla, system-ui, sans-serif; color: #10333F; }
+  h1, h2, h3, h4 { font-family: Bitter, Georgia, serif; }
+  a { color: #0F766E; }
+  a:hover { color: #0A5C55; }
+  doc-page:not(:defined) { visibility: hidden; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .92em; background: #F2EEE4; padding: 1px 5px; border-radius: 3px; }
+</style>
+<script src="./doc-page.js"></script>
+</helmet>
+
+<doc-page margin="0.8in">
+  <div slot="footer" style="display:flex; justify-content:space-between; font-size:10.5px; color:#5C6B72; padding-top:8px; border-top:1px solid #DFD8C9">
+    <span>TASFAM web portal &mdash; technical specification</span>
+    <span>Revolutionary Government of Zanzibar &middot; Ministry of Blue Economy and Fisheries</span>
+  </div>
+
+  <h1 style="font-size:32px; line-height:1.15; margin:0 0 10px">TASFAM web portal: technical specification and CMS build brief</h1>
+  <p style="font-size:15px; line-height:1.6; color:#4A5C63; margin:0 0 6px">Next.js public site, Django admin back office, PostgreSQL, deployed on Revolutionary Government of Zanzibar infrastructure. Version 1.0 &mdash; issued for developer procurement and build.</p>
+  <p style="font-size:13px; color:#5C6B72; margin:0 0 26px">Companion document: <em>TASFAM build prompt</em> (machine-executable instruction set for an AI coding agent) and the approved HTML design prototype.</p>
+
+  <h2 style="font-size:20px; margin:0 0 8px">1. Scope</h2>
+  <p style="font-size:15px; line-height:1.65; margin:0 0 10px">The portal is the public face of the Tanzania Scaling-up Sustainable Fisheries and Aquaculture Management project and the disclosure channel required under the project's environmental and social commitment plan. It must serve three audiences at once: coastal communities and fishers, the project management team and implementing ministries, and financing partners and oversight bodies.</p>
+  <p style="font-size:15px; line-height:1.65; margin:0 0 10px">In scope: bilingual content management, news and events, a publications library, tender notices, field stories, partners, results and KPI figures, an interactive sub-project map, a grievance redress mechanism with full case workflow, public case-status lookup, staff accounts with roles and an audit trail, and email notifications.</p>
+  <p style="font-size:15px; line-height:1.65; margin:0 0 20px">Out of scope for phase one: public user accounts, online payment, a mobile application, and integration with the SAMAKI catch-data system beyond a read-only figures import.</p>
+
+  <h2 style="font-size:20px; margin:0 0 8px">2. Architecture</h2>
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin:0 0 14px">
+    <thead>
+      <tr>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif; width:26%">Layer</th>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif">Choice and rationale</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Public frontend</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Next.js 15, App Router, TypeScript, React Server Components. Static generation with incremental revalidation for all public pages; server actions only for the grievance form.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Back office</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Django 5 with the built-in admin as the CMS, Django REST Framework for the read API. Chosen for a small team: permissions, audit, and forms come out of the box and are maintainable by a single developer.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Database</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">PostgreSQL 16 with PostGIS for sub-project geometry. Nightly encrypted dumps, 30-day retention, quarterly restore test.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Files</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Local disk or on-premise S3-compatible object storage (MinIO). Public documents served through the web server; grievance attachments served only through an authenticated Django view, never by direct URL.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Runtime</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Docker Compose on the RGoZ / e-GA server: nginx, next, django (gunicorn), postgres, redis, worker. No external cloud dependency at runtime.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Network zones</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Public site on the DMZ. Django admin bound to the government network or VPN only, on a separate hostname (<code>admin.tasfam.go.tz</code>), never linked from the public site.</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:14px; line-height:1.6; color:#4A5C63; margin:0 0 20px">Data flow: editors work in Django admin &rarr; publish triggers a webhook to Next.js &rarr; affected routes revalidate. If the backend is unreachable, the last generated pages continue to serve; only the grievance form degrades, and it must then show the phone and in-person channels instead of failing silently.</p>
+
+  <h2 style="font-size:20px; margin:0 0 8px">3. Cross-cutting requirements</h2>
+  <ul style="font-size:15px; line-height:1.65; margin:0 0 20px; padding-left:20px">
+    <li style="margin-bottom:6px"><strong>Bilingual by construction.</strong> Every editable string exists in English and Kiswahili. Kiswahili is not an afterthought: if a translation is missing the site falls back to English and the admin list view flags the record as incomplete.</li>
+    <li style="margin-bottom:6px"><strong>Low bandwidth.</strong> Budget: under 300&nbsp;KB of JavaScript and under 1&nbsp;MB total on first load of the home page over 3G. Images served as WebP with width variants; the map loads tiles only on interaction.</li>
+    <li style="margin-bottom:6px"><strong>Accessibility.</strong> WCAG 2.1 AA. Minimum 44&nbsp;px touch targets, 4.5:1 text contrast, visible focus rings, full keyboard operation, correct language attributes per locale.</li>
+    <li style="margin-bottom:6px"><strong>Data residency.</strong> All personal data, and all grievance data without exception, stays on government infrastructure in Tanzania. No third-party analytics, fonts, maps, or form services that transmit visitor data abroad. Self-host fonts and map tiles.</li>
+    <li style="margin-bottom:6px"><strong>Disclosure integrity.</strong> Safeguards documents are versioned; superseded versions remain retrievable with their disclosure date.</li>
+  </ul>
+
+  <h2 style="font-size:20px; margin:0 0 8px; break-before:page">4. Content model</h2>
+  <p style="font-size:14px; line-height:1.6; color:#4A5C63; margin:0 0 12px">All content models inherit a common base: <code>id</code> (UUID), <code>slug</code>, <code>status</code> (draft / review / published / archived), <code>published_at</code>, <code>created_by</code>, <code>updated_by</code>, <code>created_at</code>, <code>updated_at</code>. Fields marked <strong>T</strong> are translated (English and Kiswahili).</p>
+
+  <table style="width:100%; border-collapse:collapse; font-size:13.5px; margin:0 0 18px">
+    <thead>
+      <tr>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif; width:22%">Model</th>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif">Fields</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">NewsItem</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">title <strong>T</strong>, summary <strong>T</strong>, body rich text <strong>T</strong>, date, category (news / event / press release), hero image, gallery, tags, featured flag</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">Publication</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">title <strong>T</strong>, description <strong>T</strong>, type (report, ESMF, RPF, SEP, ESMP, RAP, audit, plan, guideline), file, file_size, page_count, language of file, disclosure_date, version, supersedes (self FK), is_safeguard flag</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">Tender</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">reference_no, title <strong>T</strong>, description <strong>T</strong>, procurement_method, category (goods, works, consultancy, non-consultancy), issue_date, closing_datetime, documents, status (open, closed, evaluated, awarded, cancelled), award_supplier, award_amount, award_date</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">ProjectComponent</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">number, title <strong>T</strong>, summary <strong>T</strong>, body <strong>T</strong>, allocation_usd, allocation_share, start_year, end_year, implementing_agency, sub_components (inline)</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">SubProject</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">name <strong>T</strong>, description <strong>T</strong>, component FK, district, shehia, island (Unguja / Pemba / Mainland), point geometry, area geometry (optional), status, budget_usd, physical_progress_pct, start_date, expected_completion, photos</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">Indicator</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">code (PDO / intermediate), name <strong>T</strong>, definition <strong>T</strong>, unit, lens (people, ocean, institutions, livelihoods), baseline, target, is_public, display_format, component FK</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">IndicatorValue</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">indicator FK, period (quarter / year), value, disaggregation (female, male, youth), evidence file, verified_by, verified_at, note <strong>T</strong>. Only verified values are exposed publicly.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">Story</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">headline <strong>T</strong>, pull_quote <strong>T</strong>, body <strong>T</strong>, subject_name, subject_role, location, consent_on_file (boolean, required true to publish), photos, related component</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">Partner</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">name <strong>T</strong>, role (funder, implementing agency, partner), abbreviation, logo, url, description <strong>T</strong>, display_order</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">Page &amp; Block</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Editable static pages (About, Our Ocean, Contact) composed of ordered blocks: rich text, statistics row, image with caption, accordion, call to action, document list, embedded map. Each block's text fields are translated.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">MediaAsset</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">file, alt_text <strong>T</strong> (required), caption <strong>T</strong>, credit, taken_on, location, consent_reference for identifiable people</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="font-size:17px; margin:0 0 8px">4.1 Grievance models</h3>
+  <table style="width:100%; border-collapse:collapse; font-size:13.5px; margin:0 0 14px">
+    <thead>
+      <tr>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif; width:22%">Model</th>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif">Fields</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">Case</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">reference (public, format <code>TASFAM-GRM-YYYY-NNNN</code>), category, sub_category, channel (web, phone, in person, letter, shehia committee), is_anonymous, is_sensitive (auto-set for GBV / SEA-SH categories), complainant name, contact, preferred language, district, shehia, sub_project FK (optional), description, occurred_on, status, severity, assigned_to, due_at, acknowledged_at, resolved_at, resolution_summary, satisfaction, appeal_flag</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">CaseEvent</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">case FK, actor, event type (created, acknowledged, assigned, investigated, referred, responded, appealed, closed, reopened), note, visible_to_complainant flag, timestamp. Append-only; no edits, no deletes.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">CaseAttachment</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">case FK, file (encrypted at rest), original filename, uploaded_by, virus scan status. Maximum 5 files, 10&nbsp;MB each, whitelist of document and image types.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600; vertical-align:top">AuditLog</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">actor, action, model, object id, field-level diff (values redacted for sensitive cases), IP, user agent, timestamp. Written for every create, update, delete, login, failed login, export, and every read of a sensitive case.</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:14px; line-height:1.6; color:#4A5C63; margin:0 0 20px">Personal fields on <code>Case</code> (name, contact, description, attachments) are encrypted at rest with application-level field encryption; the key lives outside the database, in the server's secret store. Anonymous cases must store no IP address and no browser fingerprint.</p>
+
+  <h2 style="font-size:20px; margin:0 0 8px; break-before:page">5. Grievance workflow</h2>
+  <p style="font-size:15px; line-height:1.65; margin:0 0 10px">States: <code>received</code> &rarr; <code>acknowledged</code> &rarr; <code>under_review</code> &rarr; <code>action_agreed</code> &rarr; <code>resolved</code> &rarr; <code>closed</code>, with <code>referred</code> and <code>appealed</code> as branches and <code>reopened</code> from closed. Service standard: acknowledge within 7 days, substantive response within 30 days; the system computes <code>due_at</code> and escalates to the safeguards lead at 80% of the window and to the project coordinator on breach.</p>
+  <p style="font-size:15px; line-height:1.65; margin:0 0 10px">Every state change writes a CaseEvent. Where the complainant gave contact details and consented, an acknowledgement and each externally visible update is sent by email or SMS in their preferred language. Notification text never contains the complaint description, the category, or any attachment &mdash; only the reference number and a neutral status line.</p>
+
+  <h3 style="font-size:17px; margin:0 0 8px">5.1 GBV, SEA and SH cases</h3>
+  <p style="font-size:15px; line-height:1.65; margin:0 0 10px">Cases in the harassment, gender-based violence, or sexual exploitation and abuse categories are handled on a survivor-centred basis and are a separate track from the moment of intake:</p>
+  <ul style="font-size:15px; line-height:1.65; margin:0 0 10px; padding-left:20px">
+    <li style="margin-bottom:6px">The case is flagged <code>is_sensitive</code> automatically and is invisible in every list, search, export, and dashboard to all users except the named GBV focal point and the project coordinator. Other safeguards staff see only that a sensitive case exists and its reference.</li>
+    <li style="margin-bottom:6px">The portal does not investigate or record incident detail beyond what the complainant volunteers. The public form shows, for this category, the referral pathway to the designated service provider before the description field, and states plainly that the project will not contact anyone without the complainant's consent.</li>
+    <li style="margin-bottom:6px">No email or SMS notification is generated for sensitive cases unless the complainant explicitly opted in; internal notification names no detail and is sent to one recipient only.</li>
+    <li style="margin-bottom:6px">Every view of a sensitive case is written to the audit log, including read access. Exports of sensitive cases are disabled in the admin.</li>
+    <li style="margin-bottom:6px">Retention: personal identifiers on sensitive cases are purged on a defined schedule after closure, leaving anonymised statistics only. The schedule is set by the safeguards lead and enforced by a scheduled job.</li>
+  </ul>
+  <p style="font-size:14px; line-height:1.6; color:#4A5C63; margin:0 0 20px">The developer implements the mechanism; the handling protocol, referral pathway, and retention period are supplied by the project's safeguards lead and must be confirmed in writing before go-live.</p>
+
+  <h2 style="font-size:20px; margin:0 0 8px">6. Roles and permissions</h2>
+  <table style="width:100%; border-collapse:collapse; font-size:13.5px; margin:0 0 20px">
+    <thead>
+      <tr>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif; width:24%">Role</th>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif">Can do</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Communications officer</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Create and edit news, stories, media, pages; submit for review; cannot publish safeguards documents; no access to grievances.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Editor / publisher</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Everything above plus publish and unpublish, manage menus and featured content.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Procurement officer</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Full control of tenders and award records only.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">M&amp;E officer</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Indicators, indicator values, evidence upload, sub-project progress; can mark values verified.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Safeguards officer</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Non-sensitive grievance cases: triage, assign, record events, respond, close. Publish safeguards documents.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">GBV focal point</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Sole handler of sensitive cases. No content permissions.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Project coordinator</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Read everything including sensitive cases, approve escalations, view audit log and SLA reports.</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">Administrator</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">User and role management, system settings. No default access to case content; granting it to oneself is itself audited.</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:14px; line-height:1.6; color:#4A5C63; margin:0 0 20px">All staff accounts require two-factor authentication. Sessions expire after 30 minutes idle. Five failed logins lock the account for 15 minutes and notify the administrator. No shared accounts.</p>
+
+  <h2 style="font-size:20px; margin:0 0 8px; break-before:page">7. Public API</h2>
+  <p style="font-size:14px; line-height:1.6; color:#4A5C63; margin:0 0 10px">Read endpoints are cached, unauthenticated, and return published records only. All accept <code>?lang=en|sw</code>. Write endpoints are limited to grievance intake.</p>
+  <table style="width:100%; border-collapse:collapse; font-size:13.5px; margin:0 0 14px">
+    <thead>
+      <tr>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif; width:46%">Endpoint</th>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif">Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC"><code>GET /api/v1/news</code>, <code>/news/{slug}</code></td><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC">Paginated list and detail, filterable by category and year</td></tr>
+      <tr><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC"><code>GET /api/v1/publications</code></td><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC">Library with type, year, safeguards filters</td></tr>
+      <tr><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC"><code>GET /api/v1/tenders</code></td><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC">Open and closed notices, awards</td></tr>
+      <tr><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC"><code>GET /api/v1/components</code>, <code>/sub-projects</code></td><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC">Component detail; sub-projects also served as GeoJSON at <code>/sub-projects.geojson</code></td></tr>
+      <tr><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC"><code>GET /api/v1/indicators</code></td><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC">Public indicators with verified values, baseline, target, time series</td></tr>
+      <tr><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC"><code>GET /api/v1/stories</code>, <code>/partners</code>, <code>/pages/{slug}</code></td><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC">Stories, partners, editable static pages</td></tr>
+      <tr><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC"><code>POST /api/v1/grievances</code></td><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC">Intake. Rate limited to 5 per hour per IP, CAPTCHA-free but honeypot and timing protected, returns only the reference number</td></tr>
+      <tr><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC"><code>GET /api/v1/grievances/status</code></td><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC">Lookup by reference plus a second factor (the phone number given, or a passphrase set at submission). Returns status and public events only, never internal notes. Rate limited to 10 attempts per hour; sensitive cases return status only.</td></tr>
+      <tr><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC"><code>POST /api/v1/revalidate</code></td><td style="padding:7px 10px; border-bottom:1px solid #E5DDCC">Signed webhook from Django on publish; triggers Next.js route revalidation</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:14px; line-height:1.6; color:#4A5C63; margin:0 0 20px">Anonymous submissions still receive a reference number and can be tracked with a passphrase chosen at submission. If the complainant loses both, the case cannot be retrieved &mdash; this is stated on the form.</p>
+
+  <h2 style="font-size:20px; margin:0 0 8px">8. Notifications</h2>
+  <ul style="font-size:15px; line-height:1.65; margin:0 0 20px; padding-left:20px">
+    <li style="margin-bottom:6px">Transactional email via the government SMTP relay; SMS via a locally contracted gateway. Both queued through Redis with retry, so a failed send never blocks a submission.</li>
+    <li style="margin-bottom:6px">Templates are bilingual and content-managed. Recipient language follows the case's preferred language.</li>
+    <li style="margin-bottom:6px">Triggers: grievance acknowledged, status changed to a visible state, response issued, SLA at 80%, SLA breached, new tender published (subscribers), weekly digest to the project coordinator.</li>
+    <li style="margin-bottom:6px">No grievance content in any message body. No attachments by email.</li>
+  </ul>
+
+  <h2 style="font-size:20px; margin:0 0 8px">9. Interactive map</h2>
+  <p style="font-size:15px; line-height:1.65; margin:0 0 20px">MapLibre GL with self-hosted vector tiles, or a static basemap where tile hosting is not available. Sub-projects are drawn from PostGIS as GeoJSON, clustered by district, filterable by component, island, and status. Each marker opens a card with name, component, status, progress and budget. The map must degrade to a searchable list view when WebGL or the tile server is unavailable, and must never call an external tile provider.</p>
+
+  <h2 style="font-size:20px; margin:0 0 8px">10. Security</h2>
+  <ul style="font-size:15px; line-height:1.65; margin:0 0 20px; padding-left:20px">
+    <li style="margin-bottom:6px">HTTPS only, HSTS, secure and same-site cookies, a strict content security policy with no inline scripts.</li>
+    <li style="margin-bottom:6px">OWASP Top 10 addressed explicitly in the developer's test plan; dependency scanning in CI; an independent penetration test before go-live and after any major release.</li>
+    <li style="margin-bottom:6px">Uploaded files virus-scanned (ClamAV), type-whitelisted, stored outside the web root, and served with <code>Content-Disposition: attachment</code>.</li>
+    <li style="margin-bottom:6px">Encrypted nightly backups held off the application server; documented restore procedure with a quarterly drill.</li>
+    <li style="margin-bottom:6px">Audit log is append-only and retained for the life of the project plus five years.</li>
+    <li style="margin-bottom:6px">A written data protection note published on the site explains what the GRM collects, who sees it, and how long it is kept.</li>
+  </ul>
+
+  <h2 style="font-size:20px; margin:0 0 8px; break-before:page">11. Acceptance criteria</h2>
+  <ol style="font-size:15px; line-height:1.65; margin:0 0 20px; padding-left:22px">
+    <li style="margin-bottom:6px">Every public page renders correctly in English and Kiswahili, with no untranslated interface strings.</li>
+    <li style="margin-bottom:6px">The communications officer can publish a news item, a tender, a publication, and a story without developer help, and the public page reflects it within one minute.</li>
+    <li style="margin-bottom:6px">A grievance submitted anonymously produces a reference number, appears in the safeguards queue, and is retrievable by the complainant through the status lookup.</li>
+    <li style="margin-bottom:6px">A case in a GBV category is invisible to the safeguards officer account and visible to the GBV focal point, and both facts are demonstrated in testing.</li>
+    <li style="margin-bottom:6px">SLA escalation fires correctly against a clock-shifted test case.</li>
+    <li style="margin-bottom:6px">Home page scores at least 90 on Lighthouse performance and 100 on accessibility, tested on a throttled 3G profile.</li>
+    <li style="margin-bottom:6px">Keyboard-only and screen-reader passes on the navigation, grievance form, map fallback, and document library.</li>
+    <li style="margin-bottom:6px">Backup restore executed successfully into a clean environment in front of the project team.</li>
+    <li style="margin-bottom:6px">Penetration test report delivered with all high and critical findings closed.</li>
+    <li style="margin-bottom:6px">Handover: source code in the government repository, deployment runbook, admin user guide in English and Kiswahili, and two half-day training sessions for the PMT.</li>
+  </ol>
+
+  <h2 style="font-size:20px; margin:0 0 8px">12. Suggested phasing</h2>
+  <table style="width:100%; border-collapse:collapse; font-size:13.5px; margin:0 0 18px">
+    <thead>
+      <tr>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif; width:18%">Phase</th>
+        <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #10333F; font-family:Bitter,serif">Contents</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">1 &mdash; Foundation</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Infrastructure, Django project, base models, bilingual framework, design system implementation, home and static pages</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">2 &mdash; Content</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">News, publications, tenders, stories, partners, components, media library, editorial workflow and roles</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">3 &mdash; Grievances</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Intake, case workflow, sensitive-case track, notifications, public status lookup, audit log</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">4 &mdash; Data</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Indicators, dashboard, sub-project map, evidence and verification workflow</td></tr>
+      <tr><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC; font-weight:600">5 &mdash; Hardening</td><td style="padding:8px 10px; border-bottom:1px solid #E5DDCC">Accessibility and performance audit, penetration test, backup drill, training, handover</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:13.5px; line-height:1.6; color:#5C6B72; margin:0; padding-top:12px; border-top:1px solid #DFD8C9">Figures shown in the design prototype are illustrative. Before go-live every public number must be replaced with a verified value from the project monitoring system, and every safeguards document with the cleared, disclosed version.</p>
+</doc-page>
+</x-dc>
+</body>
+</html>

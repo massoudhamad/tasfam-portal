@@ -1,0 +1,248 @@
+@import 'tailwindcss';
+
+/* Custom theme colors */
+@theme {
+  --color-ink: #10333F;
+  --color-accent: #0F766E;
+  --color-surface: #F6F2EA;
+  --color-card: #FFFFFF;
+  --color-hairline: #DFD8C9;
+  --color-muted: #5C6B72;
+  --color-light-accent: #8FD0C6;
+
+  --color-ocean-50: #E6F4FA;
+  --color-ocean-100: #CCE9F5;
+  --color-ocean-200: #99D3EB;
+  --color-ocean-300: #66BDE1;
+  --color-ocean-400: #33A7D7;
+  --color-ocean-500: #2196C8;
+  --color-ocean-600: #1A78A0;
+  --color-ocean-700: #145A78;
+  --color-ocean-800: #0D3C50;
+  --color-ocean-900: #071E28;
+}
+
+/* Self-hosted fonts - Bitter and Karla */
+@font-face {
+  font-family: 'Bitter';
+  src: url('/fonts/Bitter-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Bitter';
+  src: url('/fonts/Bitter-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Bitter';
+  src: url('/fonts/Bitter-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Karla';
+  src: url('/fonts/Karla-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Karla';
+  src: url('/fonts/Karla-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Karla';
+  src: url('/fonts/Karla-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Karla';
+  src: url('/fonts/Karla-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Base styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #F6F2EA;
+  color: #10333F;
+  font-family: Karla, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: Bitter, Georgia, serif;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+a {
+  color: #0F766E;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: #0A5C55;
+}
+
+:focus-visible {
+  outline: 3px solid #0F766E;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+button {
+  font: inherit;
+}
+
+/* Skip to content link for accessibility */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: #10333F;
+  color: #fff;
+  padding: 12px 18px;
+  z-index: 99;
+}
+
+.skip-link:focus {
+  left: 12px;
+  top: 12px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Ocean theme background patterns */
+.bg-ocean-pattern {
+  background: linear-gradient(180deg, #2196C8 0%, #1A78A0 40%, #145A78 70%, #0D3C50 100%);
+  position: relative;
+}
+
+.bg-ocean-pattern::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/fish-pattern.svg');
+  background-size: 300px auto;
+  background-repeat: repeat;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+/* Utility classes */
+.container-max {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* Progress bar styles */
+.progress-bar {
+  height: 10px;
+  background: #EFE9DC;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #0F766E;
+  transition: width 0.3s ease;
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card-hover:hover {
+  border-color: #0F766E;
+  transform: translateY(-2px);
+}
+
+/* Touch targets - minimum 44px */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Button styles */
+.btn-primary {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 24px;
+  border-radius: 6px;
+  background: #0F766E;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #12907F;
+  color: #fff;
+}
+
+.btn-secondary {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 24px;
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  border: 1.5px solid #6E9199;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.btn-secondary:hover {
+  border-color: #fff;
+  color: #fff;
+}

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Where We Work — TASFAM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:#F6F2EA;color:#10333F;font-family:Karla,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:Bitter,Georgia,serif;margin:0;text-wrap:pretty}
+  p{margin:0;text-wrap:pretty}
+  a{color:#0F766E;text-underline-offset:3px}
+  a:hover{color:#0A5C55}
+  :focus-visible{outline:3px solid #0F766E;outline-offset:2px;border-radius:2px}
+  button,select{font:inherit}
+  .skip{position:absolute;left:-9999px;top:0;background:#10333F;color:#fff;padding:12px 18px;z-index:999}
+  .skip:focus{left:12px;top:12px}
+  .topbar{background:#10333F;color:#CFE0E3;font-size:13.5px}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+  header.site{background:#fff;border-bottom:1px solid #DFD8C9}
+  .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;min-height:48px}
+  .lang{display:flex;border:1px solid #35545E;border-radius:999px;overflow:hidden}
+  .lang button{min-height:36px;padding:0 16px;border:0;background:transparent;color:#CFE0E3;font-weight:700;font-size:13px;cursor:pointer}
+  .lang button[aria-pressed="true"]{background:#0F766E;color:#fff}
+  .layout{display:grid;grid-template-columns:minmax(320px,380px) 1fr;gap:0;border-top:1px solid #DFD8C9}
+  .panel{background:#fff;border-right:1px solid #DFD8C9;max-height:calc(100vh - 60px);overflow-y:auto}
+  #map{height:calc(100vh - 60px);min-height:480px;background:#DCE9EA;z-index:1}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .field label{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5C6B72}
+  .field select{min-height:48px;padding:0 12px;border:1px solid #C3BBA8;border-radius:6px;background:#fff;color:#10333F;font-size:16px}
+  .site-item{display:block;width:100%;text-align:left;background:#fff;border:0;border-bottom:1px solid #EFEADF;padding:16px 22px;cursor:pointer;min-height:64px}
+  .site-item:hover{background:#FBF8F2}
+  .site-item[aria-current="true"]{background:#EDF6F4;box-shadow:inset 4px 0 0 #0F766E}
+  .site-item .nm{font-size:16.5px;font-weight:700;display:block}
+  .site-item .mt{font-size:14px;color:#5C6B72;display:block;margin-top:3px}
+  .pill{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 9px;border-radius:999px}
+  .pill.on{background:#E3F2EF;color:#0A5C55}
+  .pill.plan{background:#FDF1DF;color:#8A5A16}
+  .pill.done{background:#E7EDEF;color:#2D4F59}
+  .detail{padding:22px;border-top:1px solid #DFD8C9;background:#FBF8F2}
+  .kv{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid #E8E1D2;font-size:15px}
+  .kv span:last-child{font-weight:700;text-align:right}
+  .note{font-size:13.5px;color:#8A6A2F;background:#FDF6E3;border:1px solid #E8D9AE;border-radius:6px;padding:10px 14px;line-height:1.5}
+  .leaflet-popup-content{font-family:Karla,sans-serif;font-size:14.5px;margin:12px 14px}
+  .leaflet-popup-content strong{font-family:Bitter,serif;font-size:16px}
+  .mkr{border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr}
+    .panel{border-right:0;border-bottom:1px solid #DFD8C9;max-height:none}
+    #map{height:62vh;min-height:380px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#map">Skip to map</a>
+
+<div class="topbar">
+  <div class="wrap" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:8px 24px">
+    <span data-i18n="gov">The Revolutionary Government of Zanzibar · Ministry of Blue Economy and Fisheries</span>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" id="btnEn" aria-pressed="true">English</button>
+      <button type="button" id="btnSw" aria-pressed="false">Kiswahili</button>
+    </div>
+  </div>
+</div>
+
+<header class="site">
+  <div class="wrap" style="display:flex;align-items:center;gap:18px;padding:14px 24px">
+    <a class="brand" href="TASFAM Site.dc.html">
+      <img src="https://tasfam.blueeconomysmz.go.tz/images/logo.png" alt="TASFAM" style="height:46px" />
+      <span style="display:flex;flex-direction:column;line-height:1.2">
+        <span style="font-family:Bitter,serif;font-weight:700;font-size:20px">TASFAM</span>
+        <span style="font-size:12px;color:#5C6B72;letter-spacing:.06em;text-transform:uppercase">Tanzania · Zanzibar</span>
+      </span>
+    </a>
+    <div style="flex:1"></div>
+    <a href="TASFAM Site.dc.html" style="min-height:48px;display:inline-flex;align-items:center;padding:0 18px;border-radius:6px;background:#10333F;color:#fff;text-decoration:none;font-weight:700;font-size:15px" data-i18n="back">Back to site</a>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="panel">
+    <div style="padding:22px 22px 8px">
+      <h1 style="font-size:26px;font-weight:700" data-i18n="title">Where we work</h1>
+      <p style="font-size:15.5px;color:#4A5C63;line-height:1.55;margin-top:8px" data-i18n="lede">Unguja, Pemba and the mainland coast. Select a location for its projects, funding, outputs and beneficiaries.</p>
+    </div>
+    <div style="padding:14px 22px 4px">
+      <div class="field">
+        <label for="fComp" data-i18n="fComp">Component</label>
+        <select id="fComp"></select>
+      </div>
+      <div class="field">
+        <label for="fYear" data-i18n="fYear">Year</label>
+        <select id="fYear"></select>
+      </div>
+      <div class="field">
+        <label for="fStat" data-i18n="fStat">Status</label>
+        <select id="fStat"></select>
+      </div>
+      <div class="field">
+        <label for="fDonor" data-i18n="fDonor">Donor</label>
+        <select id="fDonor"></select>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button type="button" id="reset" style="min-height:48px;flex:1;border:1.5px solid #C3BBA8;background:#fff;border-radius:6px;font-weight:700;font-size:15px;cursor:pointer" data-i18n="reset">Clear filters</button>
+        <button type="button" id="csv" style="min-height:48px;flex:1;border:0;background:#10333F;color:#fff;border-radius:6px;font-weight:700;font-size:15px;cursor:pointer" data-i18n="csv">Export CSV</button>
+      </div>
+      <div style="border:1px solid #DFD8C9;border-radius:8px;padding:14px 16px;margin-bottom:16px">
+        <p style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5C6B72;margin-bottom:10px" data-i18n="legend">Marker colour</p>
+        <ul id="legend" style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px"></ul>
+      </div>
+    </div>
+    <div style="padding:0 22px 14px">
+      <p class="note" data-i18n="ph">Locations and figures are illustrative pending verified TASFAM data.</p>
+    </div>
+    <h2 id="count" role="status" aria-live="polite" style="font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#5C6B72;padding:14px 22px;border-top:1px solid #DFD8C9;margin:0"></h2>
+    <div id="list"></div>
+    <div class="detail" id="detail" tabindex="-1"></div>
+  </div>
+  <div id="map" role="application" aria-label="Map of TASFAM project locations"></div>
+</div>
+
+<footer style="background:#0A2530;color:#CFE0E3">
+  <div class="wrap" style="padding:20px 24px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;font-size:14px">
+    <span>© 2026 TASFAM. All rights reserved.</span>
+    <span data-i18n="fin">Financed by the World Bank · Government of Tanzania</span>
+  </div>
+</footer>
+
+<script>
+const SITES = [
+  {n:"Mkokotoni",r:"Unguja North",z:"Unguja",c:[-5.930,39.253],comp:2,yr:2025,st:"Ongoing",dn:"World Bank (IDA)",f:"USD 1.9M",p:"Landing site upgrade and cold chain",pSw:"Uboreshaji wa mwalo na mnyororo wa ubaridi",o:"Ice plant, 2 cold rooms, banda rehabilitation",oSw:"Kiwanda cha barafu, vyumba 2 vya ubaridi, ukarabati wa banda",b:2450},
+  {n:"Nungwi",r:"Unguja North",z:"Unguja",c:[-5.726,39.294],comp:2,yr:2026,st:"Ongoing",dn:"World Bank (IDA)",f:"USD 1.2M",p:"Fisher registration and vessel tracking",pSw:"Usajili wa wavuvi na ufuatiliaji wa vyombo",o:"3,100 fishers registered, 42 vessels on GPS",oSw:"Wavuvi 3,100 wamesajiliwa, vyombo 42 kwa GPS",b:3100},
+  {n:"Paje",r:"Unguja South",z:"Unguja",c:[-6.269,39.531],comp:3,yr:2025,st:"Ongoing",dn:"World Bank (IDA)",f:"USD 0.8M",p:"Deep-water seaweed farming",pSw:"Ukulima wa mwani kwa maji ya kina",o:"46 groups equipped, 1,180 farmers trained",oSw:"Vikundi 46 vimepatiwa vifaa, wakulima 1,180 wamepata mafunzo",b:1180},
+  {n:"Kizimkazi",r:"Unguja South",z:"Unguja",c:[-6.443,39.464],comp:1,yr:2026,st:"Planned",dn:"Government of Tanzania",f:"USD 0.4M",p:"Co-management area plan",pSw:"Mpango wa eneo la usimamizi shirikishi",o:"Shehia committee formation, plan drafting",oSw:"Kuunda kamati za shehia, kuandika mpango",b:640},
+  {n:"Chwaka",r:"Unguja Central",z:"Unguja",c:[-6.152,39.428],comp:3,yr:2025,st:"Completed",dn:"World Bank (IDA)",f:"USD 0.6M",p:"Seaweed processing unit",pSw:"Kitengo cha usindikaji wa mwani",o:"Drying platform, packing unit, 3 buyers linked",oSw:"Jukwaa la kukaushia, kitengo cha kufunga, wanunuzi 3 wameunganishwa",b:820},
+  {n:"Malindi, Zanzibar Town",r:"Urban West",z:"Unguja",c:[-6.157,39.192],comp:4,yr:2025,st:"Ongoing",dn:"World Bank (IDA)",f:"USD 1.1M",p:"SAMAKI data system and PIU",pSw:"Mfumo wa takwimu SAMAKI na kitengo cha utekelezaji",o:"Data system live, 8 quarterly reports issued",oSw:"Mfumo wa takwimu unafanya kazi, ripoti 8 za robo mwaka",b:0},
+  {n:"Wete",r:"Pemba North",z:"Pemba",c:[-5.056,39.728],comp:3,yr:2026,st:"Ongoing",dn:"World Bank (IDA)",f:"USD 1.4M",p:"Cage fish farming pilot",pSw:"Mradi wa majaribio wa ufugaji samaki kwa vizimba",o:"12 cages installed, 26-member women's group",oSw:"Vizimba 12 vimewekwa, kikundi cha wanawake wa 26",b:26},
+  {n:"Konde",r:"Pemba North",z:"Pemba",c:[-4.912,39.723],comp:1,yr:2026,st:"Planned",dn:"Government of Tanzania",f:"USD 0.3M",p:"Marine conservation area governance",pSw:"Utawala wa eneo la hifadhi ya bahari",o:"Committee training, boundary demarcation",oSw:"Mafunzo ya kamati, kuweka mipaka",b:410},
+  {n:"Chake Chake",r:"Pemba South",z:"Pemba",c:[-5.246,39.766],comp:2,yr:2025,st:"Ongoing",dn:"World Bank (IDA)",f:"USD 2.2M",p:"Landing site and market rehabilitation",pSw:"Ukarabati wa mwalo na soko",o:"Market hall, cold room, 1,900 fishers registered",oSw:"Jengo la soko, chumba cha ubaridi, wavuvi 1,900 wamesajiliwa",b:1900},
+  {n:"Mkoani",r:"Pemba South",z:"Pemba",c:[-5.365,39.652],comp:2,yr:2026,st:"Ongoing",dn:"World Bank (IDA)",f:"USD 1.6M",p:"Cold chain and quality assurance",pSw:"Mnyororo wa ubaridi na udhibiti wa ubora",o:"Ice plant, hygiene training for 340 traders",oSw:"Kiwanda cha barafu, mafunzo ya usafi kwa wafanyabiashara 340",b:1340},
+  {n:"Tanga",r:"Tanga",z:"Mainland coast",c:[-5.070,39.098],comp:2,yr:2025,st:"Ongoing",dn:"World Bank (IDA)",f:"USD 3.1M",p:"Priority fishery management and landing sites",pSw:"Usimamizi wa uvuvi wa kipaumbele na mialo",o:"4 landing sites, 4,200 fishers registered",oSw:"Mialo 4, wavuvi 4,200 wamesajiliwa",b:4200},
+  {n:"Pangani",r:"Tanga",z:"Mainland coast",c:[-5.427,38.982],comp:1,yr:2026,st:"Planned",dn:"World Bank (IDA)",f:"USD 0.7M",p:"Beach management unit strengthening",pSw:"Kuimarisha vitengo vya usimamizi wa ufukwe",o:"9 BMUs supported, bylaws revised",oSw:"Vitengo 9 vimesaidiwa, sheria ndogo zimerekebishwa",b:980},
+  {n:"Bagamoyo",r:"Pwani",z:"Mainland coast",c:[-6.442,38.903],comp:3,yr:2025,st:"Ongoing",dn:"World Bank (IDA)",f:"USD 2.4M",p:"Aquaculture hatchery and value chains",pSw:"Kituo cha vifaranga na minyororo ya thamani",o:"Hatchery upgrade, 62 pond farmers supported",oSw:"Uboreshaji wa kituo cha vifaranga, wafugaji 62 wa mabwawa wamesaidiwa",b:1460},
+  {n:"Kigamboni, Dar es Salaam",r:"Dar es Salaam",z:"Mainland coast",c:[-6.850,39.315],comp:4,yr:2025,st:"Ongoing",dn:"World Bank (IDA)",f:"USD 1.8M",p:"National coordination and M&E",pSw:"Uratibu wa kitaifa na ufuatiliaji",o:"Results framework, 2 audits, MIS rollout",oSw:"Mfumo wa matokeo, ukaguzi 2, usambazaji wa MIS",b:0},
+  {n:"Mafia",r:"Pwani",z:"Mainland coast",c:[-7.910,39.660],comp:1,yr:2026,st:"Ongoing",dn:"Government of Tanzania",f:"USD 1.0M",p:"Marine park co-management",pSw:"Usimamizi shirikishi wa hifadhi ya bahari",o:"Patrol support, 14 village committees",oSw:"Msaada wa doria, kamati 14 za vijiji",b:1730},
+  {n:"Kilwa Masoko",r:"Lindi",z:"Mainland coast",c:[-8.921,39.514],comp:2,yr:2026,st:"Planned",dn:"World Bank (IDA)",f:"USD 2.0M",p:"Landing site and cold chain",pSw:"Mwalo na mnyororo wa ubaridi",o:"2 landing sites, ice plant, market shed",oSw:"Mialo 2, kiwanda cha barafu, banda la soko",b:2100},
+  {n:"Mtwara",r:"Mtwara",z:"Mainland coast",c:[-10.267,40.183],comp:2,yr:2026,st:"Ongoing",dn:"World Bank (IDA)",f:"USD 2.6M",p:"Priority fishery management",pSw:"Usimamizi wa uvuvi wa kipaumbele",o:"3,400 fishers registered, 61 vessels tracked",oSw:"Wavuvi 3,400 wamesajiliwa, vyombo 61 vinafuatiliwa",b:3400}
+];
+const ZONE_SW = {"Unguja":"Unguja","Pemba":"Pemba","Mainland coast":"Ukanda wa Bara"};
+const REG_SW = {"Unguja North":"Kaskazini Unguja","Unguja South":"Kusini Unguja","Unguja Central":"Kati Unguja","Urban West":"Mjini Magharibi","Pemba North":"Kaskazini Pemba","Pemba South":"Kusini Pemba","Tanga":"Tanga","Pwani":"Pwani","Dar es Salaam":"Dar es Salaam","Lindi":"Lindi","Mtwara":"Mtwara"};
+const DONOR_SW = {"World Bank (IDA)":"Benki ya Dunia (IDA)","Government of Tanzania":"Serikali ya Tanzania"};
+const proj = s => lang==="en" ? s.p : s.pSw;
+const outs = s => lang==="en" ? s.o : s.oSw;
+const reg  = s => lang==="en" ? s.r : (REG_SW[s.r]||s.r);
+const zone = s => lang==="en" ? s.z : (ZONE_SW[s.z]||s.z);
+const donor = d => lang==="en" ? d : (DONOR_SW[d]||d);
+const COMPS = {1:"1 — Fisheries governance",2:"2 — Sustainable fisheries management",3:"3 — Aquaculture & value chains",4:"4 — Project management & M&E"};
+const COMPS_SW = {1:"1 — Utawala wa uvuvi",2:"2 — Usimamizi endelevu wa uvuvi",3:"3 — Ufugaji na minyororo ya thamani",4:"4 — Usimamizi wa mradi na ufuatiliaji"};
+const COLORS = {1:"#C9772A",2:"#0F766E",3:"#1F6FA8",4:"#10333F"};
+
+const I18N = {
+  en:{gov:"The Revolutionary Government of Zanzibar · Ministry of Blue Economy and Fisheries",back:"Back to site",title:"Where we work",lede:"Unguja, Pemba and the mainland coast. Select a location for its projects, funding, outputs and beneficiaries.",fComp:"Component",fYear:"Year",fStat:"Status",fDonor:"Donor",reset:"Clear filters",csv:"Export CSV",legend:"Marker colour",ph:"Locations and figures are illustrative pending verified TASFAM data.",fin:"Financed by the World Bank · Government of Tanzania",all:"All",allY:"All years",allS:"All statuses",allD:"All donors",showing:s=>s+" location"+(s===1?"":"s")+" shown",empty:"No locations match these filters.",pick:"Select a location on the map or in the list to see its detail.",funding:"Funding",outputs:"Outputs",benef:"Beneficiaries",comp:"Component",status:"Status",donor:"Donor",year:"Year",region:"Region"},
+  sw:{gov:"Serikali ya Mapinduzi ya Zanzibar · Wizara ya Uchumi wa Buluu na Uvuvi",back:"Rudi kwenye tovuti",title:"Tunapofanya kazi",lede:"Unguja, Pemba na ukanda wa Bara. Chagua eneo ili kuona miradi, fedha, matokeo na wanufaika.",fComp:"Kipengele",fYear:"Mwaka",fStat:"Hali",fDonor:"Mfadhili",reset:"Ondoa vichujio",csv:"Pakua CSV",legend:"Rangi ya alama",ph:"Maeneo na takwimu ni za mfano hadi data halisi ya TASFAM ithibitishwe.",fin:"Inafadhiliwa na Benki ya Dunia · Serikali ya Tanzania",all:"Vyote",allY:"Miaka yote",allS:"Hali zote",allD:"Wafadhili wote",showing:s=>"Maeneo "+s+" yanaonyeshwa",empty:"Hakuna eneo linalolingana na vichujio hivi.",pick:"Chagua eneo kwenye ramani au orodha ili kuona maelezo.",funding:"Fedha",outputs:"Matokeo",benef:"Wanufaika",comp:"Kipengele",status:"Hali",donor:"Mfadhili",year:"Mwaka",region:"Mkoa/Wilaya"}
+};
+const ST_SW = {Ongoing:"Inaendelea",Planned:"Imepangwa",Completed:"Imekamilika"};
+
+let lang="en", selected=null;
+const t = () => I18N[lang];
+
+const map = L.map("map",{scrollWheelZoom:true,keyboard:true}).setView([-6.6,39.3],7);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap contributors"}).addTo(map);
+const layer = L.layerGroup().addTo(map);
+
+function opt(sel,val,label){const o=document.createElement("option");o.value=val;o.textContent=label;sel.appendChild(o);}
+function buildFilters(){
+  const fc=document.getElementById("fComp"),fy=document.getElementById("fYear"),fs=document.getElementById("fStat"),fd=document.getElementById("fDonor");
+  [fc,fy,fs,fd].forEach(s=>s.innerHTML="");
+  opt(fc,"",t().all); Object.keys(COMPS).forEach(k=>opt(fc,k,(lang==="en"?COMPS:COMPS_SW)[k]));
+  opt(fy,"",t().allY); [...new Set(SITES.map(s=>s.yr))].sort().forEach(y=>opt(fy,y,y));
+  opt(fs,"",t().allS); ["Ongoing","Planned","Completed"].forEach(s=>opt(fs,s,lang==="en"?s:ST_SW[s]));
+  opt(fd,"",t().allD); [...new Set(SITES.map(s=>s.dn))].forEach(d=>opt(fd,d,donor(d)));
+  fc.value=cur.comp; fy.value=cur.yr; fs.value=cur.st; fd.value=cur.dn;
+}
+const cur={comp:"",yr:"",st:"",dn:""};
+
+function filtered(){
+  return SITES.filter(s=>(!cur.comp||String(s.comp)===cur.comp)&&(!cur.yr||String(s.yr)===cur.yr)&&(!cur.st||s.st===cur.st)&&(!cur.dn||s.dn===cur.dn));
+}
+function pillClass(st){return st==="Ongoing"?"on":st==="Planned"?"plan":"done";}
+function statusLabel(st){return lang==="en"?st:ST_SW[st];}
+
+function render(){
+  const rows=filtered();
+  document.getElementById("count").textContent=t().showing(rows.length);
+  const list=document.getElementById("list");
+  list.innerHTML="";
+  if(!rows.length){
+    const p=document.createElement("p");p.textContent=t().empty;p.style.cssText="padding:20px 22px;font-size:15.5px;color:#5C6B72";list.appendChild(p);
+  }
+  rows.forEach(s=>{
+    const b=document.createElement("button");
+    b.type="button";b.className="site-item";
+    if(selected&&selected.n===s.n)b.setAttribute("aria-current","true");
+    b.innerHTML='<span class="nm"></span><span class="mt"></span><span class="pill '+pillClass(s.st)+'" style="margin-top:8px"></span>';
+    b.querySelector(".nm").textContent=s.n;
+    b.querySelector(".mt").textContent=reg(s)+" · "+zone(s)+" · "+s.f;
+    b.querySelector(".pill").textContent=statusLabel(s.st);
+    b.addEventListener("click",()=>select(s,true));
+    list.appendChild(b);
+  });
+
+  layer.clearLayers();
+  rows.forEach(s=>{
+    const isSel=selected&&selected.n===s.n;
+    const size=isSel?22:15;
+    const m=L.marker(s.c,{
+      title:s.n,
+      keyboard:true,
+      alt:s.n+", "+s.r,
+      icon:L.divIcon({className:"",iconSize:[size,size],iconAnchor:[size/2,size/2],
+        html:'<div class="mkr" style="width:'+size+'px;height:'+size+'px;background:'+COLORS[s.comp]+'"></div>'})
+    });
+    m.bindPopup("<strong>"+s.n+"</strong><br>"+proj(s)+"<br><b>"+s.f+"</b> · "+statusLabel(s.st));
+    m.on("click",()=>select(s,false));
+    m.addTo(layer);
+  });
+  detail();
+}
+
+function detail(){
+  const d=document.getElementById("detail");
+  if(!selected){d.innerHTML='<p style="font-size:15px;color:#5C6B72;line-height:1.55">'+t().pick+"</p>";return;}
+  const s=selected;
+  d.innerHTML=
+    '<h3 style="font-size:22px;font-weight:700">'+s.n+"</h3>"+
+    '<p style="font-size:15px;color:#4A5C63;margin:6px 0 14px">'+proj(s)+"</p>"+
+    '<div class="kv"><span>'+t().region+"</span><span>"+reg(s)+" · "+zone(s)+"</span></div>"+
+    '<div class="kv"><span>'+t().comp+"</span><span>"+(lang==="en"?COMPS:COMPS_SW)[s.comp]+"</span></div>"+
+    '<div class="kv"><span>'+t().funding+"</span><span>"+s.f+"</span></div>"+
+    '<div class="kv"><span>'+t().benef+"</span><span>"+(s.b?s.b.toLocaleString():"—")+"</span></div>"+
+    '<div class="kv"><span>'+t().year+"</span><span>"+s.yr+"</span></div>"+
+    '<div class="kv"><span>'+t().donor+"</span><span>"+donor(s.dn)+"</span></div>"+
+    '<div class="kv"><span>'+t().status+'</span><span><span class="pill '+pillClass(s.st)+'">'+statusLabel(s.st)+"</span></span></div>"+
+    '<p style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#5C6B72;margin:16px 0 6px">'+t().outputs+"</p>"+
+    '<p style="font-size:15.5px;line-height:1.55">'+outs(s)+"</p>";
+}
+
+function select(s,fly){
+  selected=s;
+  render();
+  document.getElementById("detail").focus();
+  if(fly){
+    try{
+      const sz=map.getSize();
+      if(!sz||!sz.x||!sz.y){map.invalidateSize();}
+      const sz2=map.getSize();
+      if(sz2&&sz2.x&&sz2.y){map.flyTo(s.c,10,{duration:.6});}else{map.setView(s.c,10);}
+    }catch(err){try{map.setView(s.c,10);}catch(e2){}}
+  }
+}
+
+function buildLegend(){
+  const ul=document.getElementById("legend");ul.innerHTML="";
+  Object.keys(COMPS).forEach(k=>{
+    const li=document.createElement("li");
+    li.style.cssText="display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.35";
+    li.innerHTML='<span aria-hidden="true" style="width:13px;height:13px;border-radius:50%;flex:none;margin-top:3px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);background:'+COLORS[k]+'"></span><span></span>';
+    li.querySelector("span:last-child").textContent=(lang==="en"?COMPS:COMPS_SW)[k];
+    ul.appendChild(li);
+  });
+}
+
+function exportCsv(){
+  const rows=filtered();
+  const head=["Location","Region","Zone","Component","Project","Funding","Beneficiaries","Year","Status","Donor","Outputs"];
+  const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const csv=[head.map(q).join(",")].concat(rows.map(s=>[s.n,s.r,s.z,COMPS[s.comp],s.p,s.f,s.b,s.yr,s.st,s.dn,s.o].map(q).join(","))).join("\n");
+  const url=URL.createObjectURL(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}));
+  const a=document.createElement("a");a.href=url;a.download="tasfam-locations.csv";a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+document.getElementById("csv").addEventListener("click",exportCsv);
+
+function applyI18n(){
+  document.documentElement.lang=lang;
+  document.querySelectorAll("[data-i18n]").forEach(el=>{const k=el.getAttribute("data-i18n");if(t()[k])el.textContent=t()[k];});
+  document.getElementById("btnEn").setAttribute("aria-pressed",lang==="en");
+  document.getElementById("btnSw").setAttribute("aria-pressed",lang==="sw");
+  buildFilters();buildLegend();render();
+}
+
+["fComp","fYear","fStat","fDonor"].forEach((id,i)=>{
+  document.getElementById(id).addEventListener("change",e=>{
+    cur[["comp","yr","st","dn"][i]]=e.target.value;render();
+  });
+});
+function safeFly(c,z){
+  try{
+    const sz=map.getSize();
+    if(sz&&sz.x&&sz.y){map.flyTo(c,z,{duration:.6});}else{map.invalidateSize();map.setView(c,z);}
+  }catch(err){try{map.setView(c,z);}catch(e2){}}
+}
+document.getElementById("reset").addEventListener("click",()=>{
+  cur.comp=cur.yr=cur.st=cur.dn="";selected=null;buildFilters();render();safeFly([-6.6,39.3],7);
+});
+document.getElementById("btnEn").addEventListener("click",()=>{lang="en";applyI18n();});
+document.getElementById("btnSw").addEventListener("click",()=>{lang="sw";applyI18n();});
+
+applyI18n();
+const mapEl=document.getElementById("map");
+if(window.ResizeObserver){
+  let raf=null;
+  new ResizeObserver(()=>{
+    if(raf)cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(()=>map.invalidateSize());
+  }).observe(mapEl);
+}
+window.addEventListener("load",()=>map.invalidateSize());
+window.addEventListener("orientationchange",()=>setTimeout(()=>map.invalidateSize(),300));
+[0,200,600,1200].forEach(d=>setTimeout(()=>map.invalidateSize(),d));
+</script>
+</body>
+</html>
